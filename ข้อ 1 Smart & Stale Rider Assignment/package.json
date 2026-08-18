@@ -1,0 +1,8 @@
+{
+  "name": "smart-rider-assignment-radar-v3",
+  "version": "1.2.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/riderAssignment.test.js"
+  }
+}

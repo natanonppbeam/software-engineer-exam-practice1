@@ -1,0 +1,46 @@
+3: Code Review — Inventory Race Condition (15 คะแนน)
+
+async function placeOrder(orderId, items) {
+    const connection = await db.getConnection(); <------------------ เพิ่ม Connection เพื่อกันนำข้อมูลเข้าทีละชุด
+
+    try {
+        await connection.beginTransaction();  
+
+        for (const item of items) {
+
+            const [result] = await connection.query(
+                `
+                UPDATE menu <------------------------------------เปลี่ยนเป็นการ Update ข้อมูลว่าเราต้องการนำข้อมูลออกจาก stock เท่าไร
+                SET stock = stock - ?
+                WHERE id = ?
+                AND stock >= ?
+                `,
+                [item.qty, item.id, item.qty]
+            );
+
+            if (result.affectedRows === 0) {
+                throw new Error("INSUFFICIENT_STOCK");
+            }
+        }
+
+        await connection.query(
+            `
+            INSERT INTO orders (id, status)  <------------------------------------เปลี่ยนเป็นการ Insert ข้อมูลเพื่อดูว่า ของใน stock มันมีมากกว่าหรือ น้อยกว่า ของที่ต้องการจะนำออก
+            VALUES (?, ?)
+            `,
+
+            [orderId, "confirmed"]
+        );
+        await connection.commit();
+
+    } catch (error) {
+
+        await connection.rollback(); <------------------------------ Rollback กับไปตั้งแต่ต้น
+        throw error;
+
+    } finally {
+
+        connection.release();
+    }
+}
+

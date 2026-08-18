@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rider Assignment Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">Smart Rider Assignment</span>
+        <h1>Rider Assignment Simulator</h1>
+        <p>
+          ทดลอง <code>assignRider(order, riders)</code> แบบ Interactive —
+          ลาก Rider บน Top View ได้โดยตรง แล้วระบบจะ Sync พิกัดกลับไปยัง Rider Fleet อัตโนมัติ
+        </p>
+      </div>
+      <div class="header-status">
+        <span class="status-dot"></span>
+        Ready
+      </div>
+    </header>
+
+    <section class="rule-strip" aria-label="Assignment rules">
+      <article>
+        <span class="rule-icon stale-icon">120s</span>
+        <div>
+          <strong>Stale Protection</strong>
+          <p>เกิน 2 นาที ตัดออกทันที</p>
+        </div>
+      </article>
+      <article>
+        <span class="rule-icon tie-icon">500m</span>
+        <div>
+          <strong>Tie-breaker</strong>
+          <p>ระยะใกล้กัน เลือก Rating สูงกว่า</p>
+        </div>
+      </article>
+      <article>
+        <span class="rule-icon radius-icon">5→15</span>
+        <div>
+          <strong>Radius Fallback</strong>
+          <p>5 → 10 → 15 กม.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="workspace">
+      <article class="card map-card">
+        <div class="card-header">
+          <div>
+            <h2>Top View</h2>
+            <p>ลากจุด Rider เพื่อเปลี่ยนตำแหน่งได้ทันที • ดาว ★ แสดงเมื่อ Rating > 4.5</p>
+          </div>
+          <div class="map-actions">
+            <button id="fitView" class="secondary-btn" type="button">Fit view</button>
+            <span id="radiusBadge" class="pill">Idle</span>
+          </div>
+        </div>
+
+        <div class="map-canvas-wrap">
+          <svg id="radar" viewBox="0 0 640 640" role="img" aria-label="Interactive rider position simulator"></svg>
+
+          <div class="map-help">
+            <span class="cursor-icon">↔</span>
+            <span>ลาก Rider เพื่อย้ายตำแหน่ง</span>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><i class="legend-dot restaurant"></i> ร้านอาหาร</span>
+          <span><i class="legend-dot fresh"></i> Fresh</span>
+          <span><i class="legend-dot stale"></i> Stale</span>
+          <span><i class="legend-dot selected"></i> Selected</span>
+          <span><i class="legend-star">★</i> Rating &gt; 4.5</span>
+        </div>
+
+        <div class="scenario-toolbar">
+          <span>Quick scenarios</span>
+          <div>
+            <button id="scenNormal" type="button">Normal</button>
+            <button id="scenTie" type="button">Tie-breaker</button>
+            <button id="scenStale" type="button">Stale</button>
+            <button id="scenEdge" type="button">Fallback</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card control-card">
+        <div class="card-header">
+          <div>
+            <h2>Rider Fleet</h2>
+            <p>ค่าจะ Sync อัตโนมัติ • Freshness timer นับแบบ Realtime และ Reset ได้</p>
+          </div>
+          <button id="addRider" class="secondary-btn" type="button">+ Add Rider</button>
+        </div>
+
+        <div class="fleet-list" id="riderBody"></div>
+
+        <button id="runAssign" class="primary-btn" type="button">
+          Run assignRider()
+        </button>
+
+        <div id="resultBanner" class="result-banner" hidden aria-live="polite"></div>
+
+        <div id="metrics" class="metric-grid" hidden>
+          <div>
+            <span>Selected</span>
+            <strong id="metricRider">—</strong>
+          </div>
+          <div>
+            <span>Distance</span>
+            <strong id="metricDistance">—</strong>
+          </div>
+          <div>
+            <span>Rating</span>
+            <strong id="metricRating">—</strong>
+          </div>
+          <div>
+            <span>Radius</span>
+            <strong id="metricRadius">—</strong>
+          </div>
+        </div>
+
+        <details class="trace-details">
+          <summary>Decision trace</summary>
+          <div id="trace" class="trace" aria-live="polite">
+            กด Run เพื่อดูขั้นตอนการตัดสินใจ
+          </div>
+        </details>
+      </article>
+    </section>
+
+    <section class="card logic-card">
+      <div class="logic-copy">
+        <span class="eyebrow">Business Logic</span>
+        <h2>UI และ Algorithm แยกออกจากกัน</h2>
+        <p>
+          Top View เป็นเพียง Simulation Layer ส่วนการคำนวณจริงยังใช้
+          Latitude / Longitude และ Haversine ใน <code>riderAssignment.js</code>
+        </p>
+      </div>
+      <button id="toggleCode" class="secondary-btn" type="button">View algorithm</button>
+      <pre id="codeBlock" hidden><code id="codeText"></code></pre>
+    </section>
+  </main>
+
+  <script src="js/riderAssignment.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
